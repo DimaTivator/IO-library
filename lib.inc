@@ -1,12 +1,21 @@
+SYS_READ   equ     0          ; read text from stdin
+SYS_WRITE  equ     1          ; write text to stdout
+SYS_EXIT   equ     60         ; terminate the program
+STDIN      equ     0          ; standard input
+STDOUT     equ     1		  ; standard output
+
+section .data
+numbers: db '0123456789'
+
 section .text
- 
  
 ; Принимает код возврата и завершает текущий процесс
 ; DONE. PRETESTED
-exit: 
-    mov		rax, 60
-	syscall
-    ret 
+exit:
+    mov     rax, SYS_EXIT
+    syscall
+    ret
+
 
 ; Принимает указатель на нуль-терминированную строку, возвращает её длину
 ; DONE. PRETESTED
@@ -23,38 +32,38 @@ string_length:
 		ret
 
 ; Принимает указатель на нуль-терминированную строку, выводит её в stdout
-; DONE. PRETESTED
+; DONE. PRETESTED	
 print_string:
-	push	rdi
-	call	string_length
-	pop		rdi
 
-	mov		rdx, rax ; string_length function return length in rax
-					 ; so we put rax to rdx 
-	mov		rax, 1 ; type of syscall - write
-	mov		rsi, rdi ; string pointer -> rsi
-	mov		rdi, 1 ; stdout descripton
+    push    rdi
+    call    string_length
+    pop     rdi
 
-	syscall
+	mov		rdx, rax		; string_length function returns length in rax
+							; so we put rax value to rdx
+    mov     rax, SYS_WRITE
+    mov     rsi, rdi		; string pointer -> rsi
+    mov     rdi, STDOUT
 
-	ret
-	
+    syscall
+
+    ret
+
 
 ; Принимает код символа и выводит его в stdout
 ; DONE. PRETESTED
 print_char:
 	push	rdi
-	mov		rax, 1 ; write syscall
+	mov		rax, SYS_WRITE
 	mov		rsi, rsp
-	mov		rdx, 1 ; len
-	mov		rdi, 1 ; fd
+	mov		rdx, 1			; len
+	mov		rdi, STDOUT
 
 	syscall
-	
+
 	pop rdi
 
     ret
-
 
 
 ; Переводит строку (выводит символ с кодом 0xA)
@@ -68,12 +77,32 @@ print_newline:
 ; Совет: выделите место в стеке и храните там результаты деления
 ; Не забудьте перевести цифры в их ASCII коды.
 print_uint:
-    section .data
-		numbers: '0123456789'
-	
+	mov		rax, rdi
+	xor		rcx, rcx				; sign-counter
+	mov		rbx, 10					; devisor -> rbx
 
+	dec		rsp
+	mov		byte [rsp], 0			; 0 -> stack for string to be 0-terminated
 
-    ret
+	.loop:
+		xor		rdx, rdx
+		div		rbx					; rax / rbx -> result in rax, remainder in rdx
+		add		rdx, '0'			; convert digit in rdx to its ASCII code
+		dec		rsp
+		mov		[rsp], dl			; dl -- the smallest part of rdx
+		inc		rcx
+		test	rax, rax
+		jne		.loop
+
+	mov		rdi, rsp				; decimal number pointer -> rdi
+	push	rcx						; save rcx before function calling
+	call	print_string
+	pop		rcx
+
+	add		rsp, rcx				; deallocating memory for deecimal number on stack
+	inc		rsp
+
+	ret
 
 ; Выводит знаковое 8-байтовое число в десятичном формате 
 print_int:
