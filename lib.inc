@@ -105,9 +105,20 @@ print_uint:
 	ret
 
 ; Выводит знаковое 8-байтовое число в десятичном формате 
+; DONE. PRETESTED
 print_int:
-    xor rax, rax
-    ret
+	test	rdi, rdi
+	jns		.positive
+
+	push	rdi
+	mov		rdi, '-'
+	call	print_char
+	pop		rdi
+	neg		rdi
+
+	.positive:
+		call	print_uint
+		ret
 
 ; Принимает два указателя на нуль-терминированные строки, возвращает 1 если они равны, 0 иначе
 ; ? DONE. PRETESTED ? TODO allocate 24 bytes instead of 32
@@ -164,6 +175,7 @@ string_equals:
 
 
 ; Читает один символ из stdin и возвращает его. Возвращает 0 если достигнут конец потока
+; DONE. PRETESTED
 read_char:
 	section .bss
 		.buffer: resb 1 ; buffer to store the input characted 
