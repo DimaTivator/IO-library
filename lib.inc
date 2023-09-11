@@ -25,25 +25,40 @@ string_length:
 ; Принимает указатель на нуль-терминированную строку, выводит её в stdout
 ; DONE. PRETESTED
 print_string:
-	
 	push	rdi
 	call	string_length
 	pop		rdi
 
-	mov		rax, 1 ; type of syscall
+	mov		rdx, rax ; string_length function return length in rax
+					 ; so we put rax to rdx 
+	mov		rax, 1 ; type of syscall - write
 	mov		rsi, rdi ; string pointer -> rsi
-	mov		rdi, 1 ; stdout descriptor
+	mov		rdi, 1 ; stdout descripton
 
 	syscall
 
-    ret
+	ret
+	
 
 ; Принимает код символа и выводит его в stdout
-print_char: 
+; DONE. PRETESTED
+print_char:
+	push	rdi
+	mov		rax, 1 ; write syscall
+	mov		rsi, rsp
+	mov		rdx, 1 ; len
+	mov		rdi, 1 ; fd
+
+	syscall
+	
+	pop rdi
 
     ret
 
+
+
 ; Переводит строку (выводит символ с кодом 0xA)
+; DONE. PRETESTED
 print_newline:
 	mov		rdi, 0xA
 	call	print_char
@@ -53,7 +68,11 @@ print_newline:
 ; Совет: выделите место в стеке и храните там результаты деления
 ; Не забудьте перевести цифры в их ASCII коды.
 print_uint:
-    xor rax, rax
+    section .data
+		numbers: '0123456789'
+	
+
+
     ret
 
 ; Выводит знаковое 8-байтовое число в десятичном формате 
@@ -62,14 +81,63 @@ print_int:
     ret
 
 ; Принимает два указателя на нуль-терминированные строки, возвращает 1 если они равны, 0 иначе
+; ? DONE. PRETESTED ? TODO allocate 24 bytes instead of 32
 string_equals:
-    xor rax, rax
-    ret
+	; stack:
+	;	len(str1) -- [rsp]
+	;	len(str2) -- [rsp + 8]
+	;	str1_pointer -- [rsp + 16]
+	;	str2_pointer -- [rsp + 24]
+
+    sub		rsp, 32  ; Allocate 32 bytes on stack for local variables
+	mov		[rsp + 16], rdi ; Store first string pointer
+	mov		[rsp + 24], rsi ; Store second string pointer
+
+	; Calculating length of the first string (its pointer is in rdi)
+	call	string_length
+	mov		[rsp], rax
+
+	; Calculating length of the second string
+	mov		rdi, [rsp + 24]
+	call	string_length
+
+	; Comparing lengths
+	; rax - second string length, [rsp] -- first string length
+	cmp		rax, [rsp]
+	jne		.fail ; return 0 if lengths are not equal
+
+	xor		rax, rax
+	.loop:
+		; getting current characters from each string
+		mov		rdx, [rsp + 16] ; rdx -- str1_pointer
+		mov		rbx, [rsp + 24] ; rbx -- str2_pointer
+
+		mov		cl, byte [rdx + rax] ; cl -- the smallest part of rcx, current str1 character
+		mov		sil, byte [rbx + rax] ; sil -- the smallest part of rsi, current str2 character
+
+		cmp		cl, sil
+		jne		.fail
+
+		inc		rax
+		cmp		rax, [rsp]
+		je		.success
+		jmp		.loop
+
+	.success:
+		mov		rax, 1
+		add		rsp, 32 ; Deallocate the space on the stack
+		ret
+
+	.fail:
+		mov		rax, 0
+		add		rsp, 32 ; Deallocate the space on the stack
+		ret
+
 
 ; Читает один символ из stdin и возвращает его. Возвращает 0 если достигнут конец потока
 read_char:
-	section: .bss
-	.buffer: resb 1 ; buffer to store the input characted 
+	section .bss
+		.buffer: resb 1 ; buffer to store the input characted 
 
     mov		rax, 0 ; syscall type
 	mov		rdi, 0 ; stdin
