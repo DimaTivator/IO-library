@@ -10,7 +10,6 @@ numbers: db '0123456789'
 section .text
 
 ; Принимает код возврата и завершает текущий процесс
-; DONE. PRETESTED
 exit:
     mov     rax, SYS_EXIT
     syscall
@@ -18,7 +17,6 @@ exit:
 
 
 ; Принимает указатель на нуль-терминированную строку, возвращает её длину
-; DONE. PRETESTED
 string_length:
     xor		rax, rax
 
@@ -32,7 +30,6 @@ string_length:
 		ret
 
 ; Принимает указатель на нуль-терминированную строку, выводит её в stdout
-; DONE. PRETESTED
 print_string:
 
     push    rdi
@@ -51,7 +48,6 @@ print_string:
 
 
 ; Принимает код символа и выводит его в stdout
-; DONE. PRETESTED
 print_char:
 	push	rdi
 	mov		rax, SYS_WRITE
@@ -67,7 +63,6 @@ print_char:
 
 
 ; Переводит строку (выводит символ с кодом 0xA)
-; DONE. PRETESTED
 print_newline:
 	mov		rdi, 0xA
 	call	print_char
@@ -76,7 +71,6 @@ print_newline:
 ; Выводит беззнаковое 8-байтовое число в десятичном формате
 ; Совет: выделите место в стеке и храните там результаты деления
 ; Не забудьте перевести цифры в их ASCII коды.
-; DONE. PRETESTED
 print_uint:
 	mov		rax, rdi
 	xor		rcx, rcx				; sign-counter
@@ -106,7 +100,6 @@ print_uint:
 	ret
 
 ; Выводит знаковое 8-байтовое число в десятичном формате
-; DONE. PRETESTED
 print_int:
 	test	rdi, rdi
 	jns		.positive
@@ -122,7 +115,6 @@ print_int:
 		ret
 
 ; Принимает два указателя на нуль-терминированные строки, возвращает 1 если они равны, 0 иначе
-; DONE. TESTED
 string_equals:
 	; stack:
 	;	len(str1) -- [rsp]
@@ -172,7 +164,6 @@ string_equals:
 		ret
 
 ; Читает один символ из stdin и возвращает его. Возвращает 0 если достигнут конец потока
-; DONE. PRETESTED
 read_char:
 	dec		rsp				; Allocating space on stack for 1 byte
 
@@ -200,7 +191,6 @@ read_char:
 ; При успехе возвращает адрес буфера в rax, длину слова в rdx.
 ; При неудаче возвращает 0 в rax
 ; Эта функция должна дописывать к слову нуль-терминатор
-
 read_word:
 	xor		r8, r8				; string length
 	dec		rsi					; buffer size -= 1 because we need to add \0 to the end of the string
